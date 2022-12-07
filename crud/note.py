@@ -1,5 +1,5 @@
 import time
-from typing import List
+from typing import List, Union
 from db import DB, atomic
 from crud import fetch_res_to_dict
 
@@ -24,9 +24,8 @@ def list_note() -> List[Note]:
 @atomic
 def search_note(search_flag: str, search_content: str) -> List[Note]:
     sql = """
-    select * from note where {}='{}' and is_deleted=0 order by created_at desc;
+    select * from note where {} like '%{}%' and is_deleted=0 order by created_at desc;
     """.format(search_flag, search_content)
-
     cur = DB.session.execute(sql)
     results = cur.fetchall()
 
@@ -81,10 +80,15 @@ def update_note(note: Note):
         raise e
 
 @atomic
-def delete_note(note: Note):
-    sql = """
-        update note set is_deleted=1 where uid='{}'
-    """.format(note.uid)
+def delete_note(note: Union[str, Note]):
+    if isinstance(note, str):
+        sql = """
+            update note set is_deleted=1 where title='{}'     
+        """.format(note)
+    else:
+        sql = """
+            update note set is_deleted=1 where uid='{}'
+        """.format(note.uid)
 
     try:
         DB.session.execute(sql)

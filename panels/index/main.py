@@ -1,7 +1,7 @@
 import time
 from enum import Enum
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread, QEvent
-from PyQt5.QtGui import QKeyEvent, QKeySequence, QMouseEvent, QCloseEvent
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QThread, QEvent, QPoint
+from PyQt5.QtGui import QKeyEvent, QKeySequence, QMouseEvent, QCloseEvent, QCursor
 from PyQt5.QtWidgets import (
     QWidget, QPushButton, QComboBox,
     QStackedWidget, QAction, QSplitter,
@@ -16,7 +16,7 @@ from panels import (
     CVBoxLayoutWidget
 )
 from crud.user import get_current_user
-from crud.note import list_note, search_note, add_note, update_note
+from crud.note import list_note, search_note, add_note, update_note, delete_note
 from schema.note import Note
 from utils.common import gen_html
 
@@ -62,7 +62,7 @@ class MainWindow(BaseWindow):
         self.setContentsMargins(0, 0, 0, 0)
         self.center()
         self.initUI()
-        # self.installEventFilter(self)
+        self.installEventFilter(self)
         self.note_stuff.connect(self.handle_note_stuff)
         self.list_thread = QThread()
         self.list_worker = ListWorker()
@@ -134,7 +134,8 @@ class MainWindow(BaseWindow):
         self.result_list.setFont(font)
         self.left_bottom_layout.addWidget(self.result_list)
         self.result_list.itemDoubleClicked.connect(self.open_note)
-        self.result_list.installEventFilter(self)
+        self.result_list.setContextMenuPolicy(3)
+        self.result_list.customContextMenuRequested[QPoint].connect(self.list_context_menu)
 
         self.left_widget.main_layout.addWidget(self.left_top_widget)
         self.left_widget.main_layout.addWidget(self.left_bottom_widget)
@@ -418,19 +419,25 @@ class MainWindow(BaseWindow):
                 each_tab.deleteLater()
         self.tab_widget.removeTab(index)
 
+    def delete_note_from_list(self, point: QPoint):
+        item = self.result_list.itemAt(point.x(), point.y())
+        self.result_list.removeItemWidget(item)
+        # list_item = self.result_list.takeItem(self.result_list.row(item))
+        delete_note(item.text())
+
+
+    def list_context_menu(self, point: QPoint):
+        popMenu = QMenu()
+        delete_action = QAction('删除', self)
+        delete_action.triggered.connect(lambda: self.delete_note_from_list(point))
+        delete_action = popMenu.addAction(delete_action)
+        popMenu.exec_(QCursor.pos())
+
+
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         # TODO: show something here
         if event.type() == 129:
             self.status_bar.clearMessage()
-        
-        if event.type() == QEvent.ContextMenu and obj is self.result_list:
-            menu = QMenu()
-            menu.addAction("delete")
-
-            if menu.exec_(event.globalPos()):
-                item = obj.itemAt(event.pos())
-                print(item.text())
-            return True
 
         return super().eventFilter(obj, event)
 
