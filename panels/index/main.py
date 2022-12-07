@@ -421,8 +421,8 @@ class MainWindow(BaseWindow):
 
     def delete_note_from_list(self, point: QPoint):
         item = self.result_list.itemAt(point.x(), point.y())
-        self.result_list.removeItemWidget(item)
-        # list_item = self.result_list.takeItem(self.result_list.row(item))
+        list_item = self.result_list.takeItem(self.result_list.row(item))
+        self.result_list.removeItemWidget(list_item)
         delete_note(item.text())
 
 
