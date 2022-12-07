@@ -316,7 +316,6 @@ class MainWindow(BaseWindow):
             if each_tab.objectName() == clicked_item.text():
                 exists_tab = True
                 tab = each_tab
-        print(exists_tab, tab)
         if exists_tab:
             self.tab_widget.setCurrentWidget(tab)
         else:
@@ -414,8 +413,9 @@ class MainWindow(BaseWindow):
         self.message_box("hello")
 
     def close_tab(self, index: int):
-        tab = self.tab_widget.currentWidget()
-        tab.deleteLater()
+        for each_tab in self.tab_widget.findChildren(QWidget):
+            if self.tab_widget.indexOf(each_tab) == index:
+                each_tab.deleteLater()
         self.tab_widget.removeTab(index)
 
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
