@@ -1,6 +1,7 @@
+__pycache__/
 venv/
-
-
-
-
+logs/
+example/
+*.db
+config.yaml
 
